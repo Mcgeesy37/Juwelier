@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mcgeesy37.github.io/Juwelier/sitemap.xml
