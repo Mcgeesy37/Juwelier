@@ -97,14 +97,15 @@
   var canvas = document.getElementById('seqCanvas');
   if (!seq || !stage || !canvas || reduceMotion || !window.gsap || !window.ScrollTrigger) return;
 
-  /* Einzelbilder: vier Clips hintereinander. MARKS sind die Bilder, auf denen je ein Schmuckstück steht. */
-  var FRAMES = 481;
-  var MARKS = [0, 120, 240, 360, 480];
-  var FOCUS = [0.5, 0.45, 0.5, 0.41, 0.45];        /* horizontaler Bildausschnitt je Station (0 links, 1 rechts) */
-  var SIDES = ['left', 'right', 'left', 'right', 'left']; /* Textseite je Station auf großen Bildschirmen */
-  var VPOS = ['bottom', 'mid', 'bottom', 'top', 'top'];       /* Texthöhe je Station auf großen Bildschirmen */
-  var HOLD = [1.0, 0.55, 0.55, 0.55, 0.8];         /* Verweildauer je Station, in Bildschirmhöhen */
-  var MOVE = 1.0;                                  /* Fahrt zwischen zwei Stationen */
+  /* Einzelbilder: fünf Clips hintereinander. MARKS sind die Haltepunkte:
+     Halt 0 ist der Einstieg mit der Überschrift, Halt 1 bis 5 sind die Schmuckstücke. */
+  var FRAMES = 601;
+  var MARKS = [0, 120, 240, 360, 480, 600];
+  var FOCUS = [0.5, 0.5, 0.45, 0.5, 0.41, 0.45];   /* horizontaler Bildausschnitt je Halt (0 links, 1 rechts) */
+  var SIDES = ['left', 'right', 'left', 'right', 'left']; /* Textseite je Schmuckstück auf großen Bildschirmen */
+  var VPOS = ['top', 'mid', 'bottom', 'top', 'top'];      /* Texthöhe je Schmuckstück auf großen Bildschirmen */
+  var HOLD = [0.6, 0.6, 0.55, 0.55, 0.55, 0.8];    /* Verweildauer je Halt, in Bildschirmhöhen */
+  var MOVE = 0.9;                                  /* Fahrt zwischen zwei Haltepunkten */
   var BG = '#f3f4f6';
 
   var small = window.matchMedia('(max-width: 767px)').matches;
@@ -122,7 +123,7 @@
 
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
 
-  /* liefert Stationsposition als Kommazahl: 0 = Ring, 1.5 = auf halbem Weg zum Collier */
+  /* liefert die Position als Kommazahl: 0 = Einstieg, 1 = Ring, 1.5 = auf halbem Weg zum Ohrhänger */
   function stationAt(u) {
     for (var k = 0; k < holds.length; k++) {
       if (u <= holds[k].end) return k;
@@ -226,7 +227,7 @@
   /* Texte je Station */
   var heroPanel = stage.querySelector('[data-panel="hero"]');
   var panels = [];
-  for (var p = 0; p < MARKS.length; p++) {
+  for (var p = 0; p < SIDES.length; p++) {
     var el = stage.querySelector('[data-panel="' + p + '"]');
     el.setAttribute('data-side', SIDES[p]);
     el.setAttribute('data-v', VPOS[p]);
@@ -234,8 +235,6 @@
   }
   var indexButtons = Array.prototype.slice.call(document.querySelectorAll('#seqIndex button'));
   var FADE = 0.16;
-  var HERO_END = 0.34;
-  var FIRST_IN = 0.5;
 
   function showPanel(el, alpha) {
     el.style.opacity = alpha.toFixed(3);
@@ -252,11 +251,11 @@
     state.focus = FOCUS[k] + (FOCUS[k + 1] - FOCUS[k]) * (pos - k);
     draw();
 
-    showPanel(heroPanel, 1 - clamp01((u - HERO_END) / FADE));
+    showPanel(heroPanel, 1 - clamp01((u - (holds[0].end - 0.08)) / FADE));
     var active = -1;
     for (var n = 0; n < panels.length; n++) {
-      var a = n === 0 ? FIRST_IN : holds[n].start - 0.1;
-      var b = holds[n].end + 0.06;
+      var a = holds[n + 1].start - 0.1;
+      var b = holds[n + 1].end + 0.06;
       var alpha = clamp01((u - a) / FADE);
       if (n < panels.length - 1) alpha *= clamp01((b - u) / FADE);
       showPanel(panels[n], alpha);
@@ -296,7 +295,7 @@
     btn.addEventListener('click', function () {
       var n = Number(btn.getAttribute('data-go'));
       var st = tween.scrollTrigger;
-      var target = n === 0 ? FIRST_IN + 0.3 : (holds[n].start + holds[n].end) / 2;
+      var target = (holds[n + 1].start + holds[n + 1].end) / 2;
       window.scrollTo({ top: st.start + (st.end - st.start) * (target / TOTAL), behavior: 'smooth' });
     });
   });
